@@ -1,0 +1,136 @@
+# CoSMoS Adapts configuration for coastal_risk_cba.
+# Values reproduce v1 (S000 + script-level constants) unless marked "v2:". Plan step 7 switches F2-F5, F7.
+# Source of each value in brackets.
+
+paths:
+  # First existing candidate is the lab root [S000 l.15].
+  root_candidates: [/cccr-lab, "J:/", /Volumes/cccr-lab]
+  project: 001_projects/003_cosmos-adapt
+  data: 000_Data
+  inputs: 010_DAMAGES_INPUT                       # per-site inputs: exposure, flood_map_sims, adaptation_dimensions, ...
+  damage_tables: 000_Data/001_DAMAGE_TABLES
+  recovery_time: 000_Data/020_INDIRECTDAMAGES_MAX_RECOVERY_TIME/max_recovery_time.csv
+  multipliers: 000_Data/021_INDIRECTDAMAGES_MULTIPLIERS/multipliers.csv
+  zillow: 000_Data/022_INDIRECTDAMAGES_ZILLOWRENT/zillowrent.xlsx
+  reference_outputs: 011_DAMAGES_results_final    # v1 outputs; read only, never written
+  # v2 outputs. Relative paths resolve against the repository root.
+  outputs: outputs
+
+modes:  # flood-map run modes [S021 l.60-65]
+  "001": hydrodynamic only (DEM change, no morphodynamics)
+  "002": morphodynamic update (DEM change, morphodynamics)
+  "003": hydrodynamic, no DEM change (dem020 bathymetry)
+  "004": morphodynamic, no DEM change (dem020 bathymetry)
+
+scenarios:
+  return_periods: [5, 20, 50, 100]                # [S000 RP_list]
+  dems:                                           # sea-level scenario code -> epoch year [S000 dem_year_map]
+    dem020: 2025
+    dem050: 2055
+    dem080: 2085
+
+# Adaptation codes per site [S000 _ADAPT_BY_SITE]; zillow sheet [S021 sheet_map].
+# aliases: short names used by the paper tables [ref/cba_tables.py SITES]; labels likewise.
+# regression_mode: flood-map mode of the v1 reference outputs (plan header).
+sites:
+  site001_santacruz:
+    label: Santa Cruz County
+    zillow_sheet: Santa Cruz
+    adapt: {"000": no_adaptation, "014": seawall, "023": reef, "031": dune}
+  site001_santacruz2:
+    aliases: [santacruz, santacruz2]
+    label: Santa Cruz County
+    zillow_sheet: Santa Cruz
+    adapt: {"000": no_adaptation, "014": seawall, "023": reef, "031": dune}
+    regression_mode: "002"
+  site002_halfmoonbay:
+    aliases: [halfmoonbay]
+    label: Half Moon Bay
+    zillow_sheet: Half Moon Bay
+    adapt: {"000": no_adaptation, "010": seawall, "020": reef}
+    regression_mode: "001"
+  site003_venturanorth:
+    label: Ventura County
+    zillow_sheet: Ventura county
+    adapt: {"000": no_adaptation, "010": seawall, "020": reef, "030": dune}
+  site004_venturanorth2:
+    aliases: [ventura, venturanorth2]
+    label: Ventura County
+    zillow_sheet: Ventura county
+    adapt: {"000": no_adaptation, "010": seawall, "020": reef, "030": dune}
+    regression_mode: "002"
+
+exposure:
+  nsi_max_distance_m: 50                          # sjoin_nearest NSI -> footprint [S010 l.121]
+  nsi_unmatched_buffer_m: 10                      # D2: report says 5 m [S010 l.145]
+  unit_assignment: first                          # first | largest_overlap [S011 l.82]
+
+damage:
+  depth_statistic: max                            # D1: max | mean [S020 l.258]
+  all_touched: true                               # [S020 l.260]
+  meters_to_feet: 3.28084                         # [S000]
+  usd_update: 1.19                                # NSI 2021 USD -> 2025 USD [S000]
+  structure_table: flBldgStructDmgFn_nsi_2022.csv # [S020 l.124]
+  contents_table: flBldgContDmgFn_nsi_2022.csv    # [S020 l.129]
+  road_cost_per_mile: 1358000                     # 2025 USD/mile [S000]
+  miles_to_meters: 1609.34                        # [S000]
+  include_roads_in_cba: false                     # F7 / D3: decision pending (default include) [S022 groupby drops NaN unit]
+
+indirect:
+  zillow_predictors: [price, area (sq ft)]        # reduced OLS model used for rent [S021]
+  rent_to_price_annual: {ret: 0.08613862058, "off": 0.02502692786, ind: 0.07381495149}  # monthly = /12 [S000]
+  rent_to_revenue: {ret: 0.075, "off": 0.055, rest: 0.08, ind: 0.04}                     # [S000]
+  # "off" is quoted: bare off is boolean false in YAML 1.1.
+  # Blends are means of the above: rr_ret_rest, rr_ret_off, rpr_ret_off [S000].
+  relocation_damage_ratio: 0.5                    # RES: structure damage / val_struct above this adds relocation [S021]
+  relocation_rent_months: 1.5                     # [S021]
+  days_per_month: 30                              # [S021]
+  # Santa Cruz rent/revenue rules by use code (port of damages.R). In v1 the block is guarded by
+  # `SITE == '001_santacruz'`, which never matches a site id, so it never ran. enabled: false = v1.
+  # Categories are 1-based indices into column.unique() order, as in v1/R.
+  site_rules:
+    santacruz_use_code:
+      sites: [site001_santacruz, site001_santacruz2]
+      enabled: false
+      column: use_code_std_desc_lps
+      rent:   # rent = sum(weight * term); terms: val_struct * monthly rpr_<x>, or res_model
+        - {categories: [12], terms: {rpr_off: 0.5, res_model: 0.5}}
+        - {categories: [22, 43], terms: {rpr_off: 1.0}}
+        - {categories: [36, 42, 55], terms: {rpr_ret_off: 1.0}}
+        - {categories: [39], terms: {rpr_ret: 0.3333333333333333, rpr_off: 0.3333333333333333, res_model: 0.3333333333333333}}
+      revenue:  # revenue = rent / rr_<x>; applied in this order, later rules overwrite
+        - {categories: [72, 28, 69], rr: ret_rest}
+        - {categories: [63, 34], rr: rest}
+        - {categories: [36, 42, 55], rr: ret_off}
+        - {categories: [12, 22], rr: "off"}
+        - {categories: [39], rr: ret_off}
+
+dunes:
+  anchor_rp: 1                                    # D4 / F5 [aux annual_expected_damage_dunes]
+
+costs:
+  unit_cost_table: adaptation_dimensions/unitary_costs_2025_{site}.csv   # under paths.inputs/<site> [S013 l.61]
+  dimensions: adaptation_dimensions/{measure}_dimensions_{site}.csv      # seawall | reef | dune | nourishment [S013]
+  seawall_reference_rows: [seawall_5ft, seawall_15ft]                    # $/m interpolated on height [S013 l.95]
+  dune_reconstruction_factor: 0.5                 # recon = (1 + VDR) * cost * factor [S000 FACTOR_RECONSTRUCTION_DUNES]
+  seawall_design: build_once_2025                 # D5: one height per segment for all epochs [S013]
+
+risk:
+  anchor_rp: 2                                    # F5: zero-damage RP closing the AED integral [aux annual_expected_damage_numint]
+  noise_floor_frac: 0.0                           # F3; v2: 0.01
+  aeb_method: per_rp                              # integral of per-RP benefit differences (v1 `aeb`; `aeb2` dropped)
+  var_levels: [0.95, 0.98, 0.99]                  # VaR/ES confidence levels (RP 20, 50, 100); new in v2
+  es_tail: flat                                   # ES beyond max RP: flat (hold L at max RP) | truncated (0, as AED)
+  inclusion:                                      # include_in_bcr flag [S022 l.712-729]
+    threshold_usd: 500000
+    metric: tot_cost
+    adapt: no_adaptation
+    dem: dem020
+    rp: 50
+
+cba:
+  nyr: 30                                         # [S000 NYR]
+  discount_rates: [0.03]                          # F4; v1 ran DISCOUNT_RATES[0] per run; v2: [0.03, 0.07]
+  first_cashflow_year: 0                          # F2; v2: 1
+  cost_base: all_placed                           # F1: all_placed | portfolio_2025 | legacy (done; legacy = 2026 report)
+  dune_reconstruction: false                      # ACTIVATE_DUNE_RECONSTRUCTION [S022, S030]
