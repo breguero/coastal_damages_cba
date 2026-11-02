@@ -4,7 +4,7 @@ title: "coastal_risk_cba: building-level coastal flood damages and cost-benefit 
 version: 1.0.0
 date-released: 2026-11-01
 license: BSD-3-Clause
-repository-code: "https://github.com/<org>/coastal_risk_cba"
+repository-code: "https://github.com/breguero/coastal_damages_cba"
 authors:
   - family-names: Reguero
     given-names: Borja G.

@@ -19,7 +19,7 @@ from pathlib import Path
 # Google Drive share link of cosmos_adapts_santacruz_sample.zip ("Anyone with the link can view").
 DRIVE_LINK = "https://drive.google.com/file/d/REPLACE_WITH_FILE_ID/view?usp=sharing"
 ZIP_NAME = "cosmos_adapts_santacruz_sample.zip"
-ZIP_SHA256 = "164ba694be0e9ebe337e6e9c3f50b35a78324e3f088ce9611b0a1f3f703ae5d2"
+ZIP_SHA256 = "22f4f4ede3308d7b66d0043656368e4cc09ac7867ac676ee51202967f69ab1e4"
 PACKAGE_DIR = "cosmos_adapts_santacruz_sample"
 
 HERE = Path(__file__).resolve().parent

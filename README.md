@@ -26,8 +26,8 @@ tests/                       unit tests; regression tests against the reference 
 ## Install
 
 ```bash
-git clone https://github.com/<org>/coastal_risk_cba.git
-cd coastal_risk_cba
+git clone https://github.com/breguero/coastal_damages_cba.git
+cd coastal_damages_cba
 conda env create -f environment.yml
 conda activate coastal-risk-cba
 ```

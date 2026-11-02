@@ -7,7 +7,7 @@ Site `site001_santacruz2`, flood-map mode `002` (morphodynamic update): 3 sea-le
 ## Data
 
 Google Drive: **<GOOGLE_DRIVE_LINK>** — `cosmos_adapts_santacruz_sample.zip`, 71 MB
-(sha256 `164ba694be0e9ebe337e6e9c3f50b35a78324e3f088ce9611b0a1f3f703ae5d2`).
+(sha256 `22f4f4ede3308d7b66d0043656368e4cc09ac7867ac676ee51202967f69ab1e4`).
 
 `download_data.py` downloads it, unpacks it into `examples/santa_cruz/data/` and checks every file against
 `MANIFEST.csv`. If the download is blocked, download the zip in a browser and run
