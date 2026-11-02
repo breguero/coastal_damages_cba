@@ -21,8 +21,8 @@ from S000_project_config_cosmos_adapt import *
 # ---------------------------------------------------------------------------
 # Config — edit these before running
 # ---------------------------------------------------------------------------
-SITE = 'site001_santacruz2'
-MODE = '002'   # 001: hydro only  002: morphodynamic  003: hydro/no DEM  004: morpho/no DEM
+SITE = RUN_SITE  # set with COSMOS_SITE or run_pipeline.py --site
+MODE = RUN_MODE  # set with COSMOS_MODE or run_pipeline.py --mode (see 000_scenario_convention_dictionary)
 
 print(f"SITE={SITE}  MODE={MODE}")
 
@@ -30,7 +30,7 @@ print(f"SITE={SITE}  MODE={MODE}")
 # Directories
 # ---------------------------------------------------------------------------
 dirdata = (
-    project_root_directory / damage_folder_outputs / SITE
+    output_root / SITE
     / '012_damages' / 'indirect_damages' / f'flood_map_{MODE}'
 )
 input_files = sorted(dirdata.glob('*damages*.gpkg'))
@@ -90,7 +90,7 @@ for adaptation_file in input_files:
 # Export summary table
 # ---------------------------------------------------------------------------
 dirout = (
-    project_root_directory / damage_folder_outputs / SITE
+    output_root / SITE
     / '012_damages' / 'aed_cba_results' / f'flood_map_{MODE}'
 )
 dirout.mkdir(parents=True, exist_ok=True)

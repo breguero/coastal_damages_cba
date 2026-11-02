@@ -31,7 +31,7 @@ from pathlib import Path
 	# SITE = 'site003_venturanorth'
 #SITE = 'site001_santacruz' #for testing only, comment out when running from terminal
 #SITE = 'site001_santacruz'
-SITE = 'site002_halfmoonbay'
+SITE = RUN_SITE  # set with COSMOS_SITE or run_pipeline.py --site
 #SITE = 'site003_venturanorth'
 #SITE = 'site004_venturanorth2'
 
@@ -40,14 +40,14 @@ SITE = 'site002_halfmoonbay'
 #   002: morphodynamic update enabled / DEM = 1, morpho = 1
 #   003: hydro without DEM change (bathy use dem020) / DEM = 0, morpho = 0
 #   004: morpho without DEM change (bathy use dem020) / DEM = 0, morpho = 1
-MODE = '001' # check 000_scenario_convention_dictionary.doc
+MODE = RUN_MODE  # set with COSMOS_MODE or run_pipeline.py --mode (see 000_scenario_convention_dictionary)
 # ----------------------------------------------------
 
-input_dir = project_root_directory / damage_folder_outputs / SITE / '012_damages' / 'indirect_damages' / f'flood_map_{MODE}'
+input_dir = output_root / SITE / '012_damages' / 'indirect_damages' / f'flood_map_{MODE}'
 if not input_dir.exists():
 	raise FileNotFoundError(f"Input directory not found: {input_dir}")
 
-output_folder = project_root_directory / damage_folder_outputs / SITE / '012_damages' / 'road_damages' / f'flood_map_mode_{MODE}'
+output_folder = output_root / SITE / '012_damages' / 'road_damages' / f'flood_map_mode_{MODE}'
 output_folder.mkdir(parents=True, exist_ok=True)
 
 input_files = sorted(input_dir.glob('*_damages_and_roads_buildings_summary.csv'))

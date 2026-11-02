@@ -1,0 +1,26 @@
+name: coastal-risk-cba
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.10
+  - pandas>=2.0
+  - geopandas>=0.14
+  - shapely>=2.0
+  - pyproj
+  - numpy
+  - numpy-financial
+  - rasterio
+  - rasterstats
+  - rioxarray
+  - xarray
+  - matplotlib-base
+  - seaborn
+  - plotly
+  - tqdm
+  - openpyxl
+  - pyyaml
+  - statsmodels
+  - pytest
+  - pip
+  - pip:
+      - -e .

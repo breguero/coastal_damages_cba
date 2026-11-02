@@ -11,6 +11,7 @@ breguero@ucsc.edu
 from __future__ import annotations
 
 import copy
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -223,14 +224,34 @@ class Config:
     def _project_path(self, key: str) -> Path:
         return self.project_dir / self.data["paths"][key]
 
-    project_dir = property(lambda self: self.root / self.data["paths"]["project"])
+    @property
+    def project_dir(self) -> Path:
+        """Folder with 000_Data/ and 010_DAMAGES_INPUT/: $COSMOS_DATA_ROOT, else <lab root>/paths.project."""
+        if os.environ.get("COSMOS_DATA_ROOT"):
+            return Path(os.environ["COSMOS_DATA_ROOT"]).expanduser().resolve()
+        return self.root / self.data["paths"]["project"]
+
     data_dir = property(lambda self: self._project_path("data"))
     inputs_dir = property(lambda self: self._project_path("inputs"))
     damage_tables_dir = property(lambda self: self._project_path("damage_tables"))
     recovery_time_file = property(lambda self: self._project_path("recovery_time"))
     multipliers_file = property(lambda self: self._project_path("multipliers"))
     zillow_file = property(lambda self: self._project_path("zillow"))
-    reference_dir = property(lambda self: self._project_path("reference_outputs"))
+    @property
+    def reference_dir(self) -> Path:
+        """v1 reference outputs (read only): $COSMOS_REFERENCE_DIR, else <project>/paths.reference_outputs."""
+        if os.environ.get("COSMOS_REFERENCE_DIR"):
+            return Path(os.environ["COSMOS_REFERENCE_DIR"]).expanduser().resolve()
+        return self._project_path("reference_outputs")
+
+    @property
+    def available_regression_sites(self) -> list[Site]:
+        """Regression sites whose reference outputs are reachable."""
+        try:
+            return [s for s in self.regression_sites if s.reference_dir.is_dir()]
+        except FileNotFoundError:
+            return []
+
 
     @property
     def outputs_dir(self) -> Path:

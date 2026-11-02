@@ -33,18 +33,18 @@ import pandas as pd
 # #SITE = 'site001_santacruz' #site_001, site_002? site is the parent dir so you don't need {site}_NSI folder***
 # SITE = 'site003_venturanorth'
 #SITE = 'site002_halfmoonbay' #for testing only, comment out when running from terminal
-SITE = 'site004_venturanorth2'
+SITE = RUN_SITE  # set with COSMOS_SITE or run_pipeline.py --site
 
 # Mode (runs)  	
 #   001: hydrodynamic only / DEM = 1, morpho = 0 
 #   002: morphodynamic update enabled / DEM = 1, morpho = 1 
 #   003: hydro without DEM change (bathy use dem020) / DEM = 0, morpho = 0 
 #   004: morpho without DEM change (bathy use dem020) / DEM = 0, morpho = 1 	
-MODE = '002' # check 000_scenario_convention_dictionary.doc 
+MODE = RUN_MODE  # set with COSMOS_MODE or run_pipeline.py --mode (see 000_scenario_convention_dictionary)
 # ----------------------------------------------------
 
 # inputs 
-damages_folder = project_root_directory / damage_folder_outputs / SITE / '012_damages' / 'indirect_damages' / f'flood_map_{MODE}'
+damages_folder = output_root / SITE / '012_damages' / 'indirect_damages' / f'flood_map_{MODE}'
 
 #input_dir = damages_folder / damage_folder_outputs / SITE / '012_damages' / 'damages_by_buildings' / f'flood_map_{MODE}'
 input_dir = damages_folder
@@ -52,7 +52,7 @@ input_files = sorted(input_dir.glob("*_damages_and_roads_buildings_summary.csv")
 
 # output folder 
 #output_folder = damages_folder / '012_damages' / 'summary_damages' / f'flood_map_{MODE}'
-output_folder = project_root_directory / damage_folder_outputs / SITE / '012_damages' / 'summary_damages' / f'flood_map_{MODE}'
+output_folder = output_root / SITE / '012_damages' / 'summary_damages' / f'flood_map_{MODE}'
 if not output_folder.exists():
     output_folder.mkdir(parents=True, exist_ok=True)
 

@@ -36,10 +36,10 @@ from aux_scripts.damage_calculation_tools import annual_expected_damage_dunes
 #SITE = 'site001_santacruz' #for testing only, comment out when running from terminal
 #SITE = 'site002_halfmoonbay' #for testing only, comment out when running from terminal
 #SITE = 'site003_venturanorth' #for testing only, comment out when running from terminal
-SITE = 'site004_venturanorth2' 
+SITE = RUN_SITE  # set with COSMOS_SITE or run_pipeline.py --site
 # ----------------------------------------------------
 
-dirout = project_root_directory / damage_folder_outputs / SITE / '012_damages'
+dirout = output_root / SITE / '012_damages'
 dirout.mkdir(parents=True, exist_ok=True)
 
 dirdata_dune_volume_loss = datadir_damages / SITE / 'dune_morphodynamic_change'   

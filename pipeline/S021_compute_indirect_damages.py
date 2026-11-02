@@ -51,7 +51,7 @@ import openpyxl; print(openpyxl.__version__) # reads Excel files
 # ----------------------------------------------------
 # config 
 ##These are the four sites we want to run in general for Cosmos Adapts:
-SITE = 'site001_santacruz2'
+SITE = RUN_SITE  # set with COSMOS_SITE or run_pipeline.py --site
 #SITE = 'site001_santacruz' #site_001, site_002? site is the parent dir so you don't need {site}_NSI folder***
 #SITE = 'site002_halfmoonbay' 
 # SITE = 'site003_venturanorth'
@@ -63,7 +63,7 @@ SITE = 'site001_santacruz2'
 #   002: morphodynamic update enabled / DEM = 1, morpho = 1 
 #   003: hydro without DEM change (bathy use dem020) / DEM = 0, morpho = 0 
 #   004: morpho without DEM change (bathy use dem020) / DEM = 0, morpho = 1 	
-MODE = '002' # check 000_scenario_convention_dictionary.doc 
+MODE = RUN_MODE  # set with COSMOS_MODE or run_pipeline.py --mode (see 000_scenario_convention_dictionary)
 # ----------------------------------------------------
 
 # Print to show which site is being processed:
@@ -74,8 +74,13 @@ if SITE not in ['site001_santacruz2','site001_santacruz', 'site002_halfmoonbay',
     raise ValueError(f"region_name {SITE} not recognized. Please choose from 'site001_santacruz', 'site002_halfmoonbay', 'site003_venturanorth', or 'site004_venturanorth2'.")    
 # ----------------------------------------------------
 
-# zillow data 
+# zillow data: the listings (zillowrent.xlsx) are used when present; otherwise the fitted
+# coefficients of the reduced OLS model (zillow_rent_ols_coefficients.csv, same values) are read.
 zillow_path = indirectdamages_zillow_directory / "zillowrent.xlsx"
+zillow_coef_path = indirectdamages_zillow_directory / "zillow_rent_ols_coefficients.csv"
+USE_ZILLOW_LISTINGS = zillow_path.exists()
+if not USE_ZILLOW_LISTINGS and not zillow_coef_path.exists():
+    raise FileNotFoundError(f"Neither {zillow_path} nor {zillow_coef_path} found.")
 sheet_map = {
         "site001_santacruz2": "Santa Cruz",
         "site001_santacruz": "Santa Cruz",
@@ -92,7 +97,7 @@ if sheet_name is None:
 # Load direct damages datasets:
 # Replace the single-file read with a loop over all input CSVs in the 020_DIRECT_DAMAGES_CSV folder.
 
-input_dir = project_root_directory / damage_folder_outputs / SITE / '012_damages' / 'damages_by_buildings' / f'flood_map_{MODE}'
+input_dir = output_root / SITE / '012_damages' / 'damages_by_buildings' / f'flood_map_{MODE}'
 input_files = sorted(input_dir.glob("*_damages_and_roads.csv")) 
 
 #Print: the input_dir has been found and contains how many files:
@@ -101,7 +106,7 @@ if not input_files:
     raise FileNotFoundError(f"No input CSV files found in {input_dir}")
 
 # dirout 
-output_folder = project_root_directory / damage_folder_outputs / SITE / '012_damages' / 'indirect_damages' / f'flood_map_{MODE}'
+output_folder = output_root / SITE / '012_damages' / 'indirect_damages' / f'flood_map_{MODE}'
 if not output_folder.exists(): output_folder.mkdir(parents=True, exist_ok=True)
 
 # Load input direct damages file, as well as Zillow rent data for scenario of a given region:
@@ -127,75 +132,81 @@ for direct_damages_input_path in input_files:
     ## RENT ESTIMATION FOR RESIDENTIAL BUILDINGS 
     #  USING ZILLOW DATA AND OLS REGRESSION 
     # -----------------------------------------------------------------------------------------------------------
-    # Load Zillow rent data:
-    # load only the sheet needed for the current SITE
-    zil = pd.read_excel(zillow_path, sheet_name=sheet_name)
-    print(f"Loaded Zillow rent data for site: {SITE} from sheet: {sheet_name}")
+    if USE_ZILLOW_LISTINGS:
+        # Load Zillow rent data:
+        # load only the sheet needed for the current SITE
+        zil = pd.read_excel(zillow_path, sheet_name=sheet_name)
+        print(f"Loaded Zillow rent data for site: {SITE} from sheet: {sheet_name}")
     
-    # Estimate rent for residential buildings (Zillow regressions) by doing a ordinary least squares regression (OLS_).
-    # The overall form of such a OLS regression is:
-    # y = beta * X + error
-    # y = beta1 * X1 + beta2 * X2 + ... + betaN * XN + error
+        # Estimate rent for residential buildings (Zillow regressions) by doing a ordinary least squares regression (OLS_).
+        # The overall form of such a OLS regression is:
+        # y = beta * X + error
+        # y = beta1 * X1 + beta2 * X2 + ... + betaN * XN + error
 
-    # here:
-    # rent ~ price + area(sq ft) + storey + blocks from the ocean ---
-    # y = rent
-    # X = [price; area (sq ft); storey; blocks from the ocean]
-    # -----------------------------------------------------------------------------------------------------------
-    print(f"Estimate the rent for residential building using Zillow data for site using an ordinary least squares regression: {SITE}")
-    print(f"\n Run the full model...\n")
-    #Allocating variables to prepare the OLS regression:
-    # Dependent variable
-    #y = pd.to_numeric(zil_sc["rent"], errors="coerce")
-    y = pd.to_numeric(zil["rent"], errors="coerce")
+        # here:
+        # rent ~ price + area(sq ft) + storey + blocks from the ocean ---
+        # y = rent
+        # X = [price; area (sq ft); storey; blocks from the ocean]
+        # -----------------------------------------------------------------------------------------------------------
+        print(f"Estimate the rent for residential building using Zillow data for site using an ordinary least squares regression: {SITE}")
+        print(f"\n Run the full model...\n")
+        #Allocating variables to prepare the OLS regression:
+        # Dependent variable
+        #y = pd.to_numeric(zil_sc["rent"], errors="coerce")
+        y = pd.to_numeric(zil["rent"], errors="coerce")
 
-    # Independent variables
-    #X = zil_sc[["price", "storey", "blocks from the ocean", "area (sq ft)"]].copy()
-    X = zil[["price", "storey", "blocks from the ocean", "area (sq ft)"]].copy()
+        # Independent variables
+        #X = zil_sc[["price", "storey", "blocks from the ocean", "area (sq ft)"]].copy()
+        X = zil[["price", "storey", "blocks from the ocean", "area (sq ft)"]].copy()
 
-    # Convert storey to numeric (like as.numeric(storey))
-    X["storey"] = pd.to_numeric(X["storey"], errors="coerce")
+        # Convert storey to numeric (like as.numeric(storey))
+        X["storey"] = pd.to_numeric(X["storey"], errors="coerce")
 
-    # Add intercept
-    # Add an intercept column to the predictor matrix X so the regression includes a constant term.
-    X = sm.add_constant(X)
+        # Add intercept
+        # Add an intercept column to the predictor matrix X so the regression includes a constant term.
+        X = sm.add_constant(X)
 
-    # Run OLS regression (full model):
-    model_full = sm.OLS(y, X, missing="drop").fit()
+        # Run OLS regression (full model):
+        model_full = sm.OLS(y, X, missing="drop").fit()
 
-    # Print the summary of the OLS regression (full model):
-    print(model_full.summary())
+        # Print the summary of the OLS regression (full model):
+        print(model_full.summary())
 
-    #-----------------------------------------------------------------------------------------------------------
-    # Create a second OLS regression model with less parameters (reduced model)
-    # Reduced model without 'storey' and 'blocks from the ocean' (not significant)
-    # rent ~ price + area(sq ft)
-    #-----------------------------------------------------------------------------------------------------------
-    print(f"\n Run the reduced model...\n")
+        #-----------------------------------------------------------------------------------------------------------
+        # Create a second OLS regression model with less parameters (reduced model)
+        # Reduced model without 'storey' and 'blocks from the ocean' (not significant)
+        # rent ~ price + area(sq ft)
+        #-----------------------------------------------------------------------------------------------------------
+        print(f"\n Run the reduced model...\n")
 
-    #Allocating variables to prepare the OLS regression:
-    # Dependent variable
-    #y2 = pd.to_numeric(zil_sc["rent"], errors="coerce")
-    y2 = pd.to_numeric(zil["rent"], errors="coerce")
+        #Allocating variables to prepare the OLS regression:
+        # Dependent variable
+        #y2 = pd.to_numeric(zil_sc["rent"], errors="coerce")
+        y2 = pd.to_numeric(zil["rent"], errors="coerce")
 
-    # Independent variables
-    #X2 = zil_sc[["price", "area (sq ft)"]].copy()
-    X2 = zil[["price", "area (sq ft)"]].copy()
+        # Independent variables
+        #X2 = zil_sc[["price", "area (sq ft)"]].copy()
+        X2 = zil[["price", "area (sq ft)"]].copy()
 
-    # Add intercept
-    # Add an intercept column to the predictor matrix X so the regression includes a constant term.
-    X2 = sm.add_constant(X2)
+        # Add intercept
+        # Add an intercept column to the predictor matrix X so the regression includes a constant term.
+        X2 = sm.add_constant(X2)
 
-    # Run OLS regression (reduced model):
-    model_reduced = sm.OLS(y2, X2, missing="drop").fit()
+        # Run OLS regression (reduced model):
+        model_reduced = sm.OLS(y2, X2, missing="drop").fit()
 
-    # Print the summary of the OLS regression (reduced model):
-    print(model_reduced.summary())
+        # Print the summary of the OLS regression (reduced model):
+        print(model_reduced.summary())
 
-    # Extract coefficients from reduced model:
-    alpha = model_reduced.params["const"]            # intercept
-    beta_price = model_reduced.params["price"]
-    beta_area  = model_reduced.params["area (sq ft)"]
+        # Extract coefficients from reduced model:
+        alpha = model_reduced.params["const"]            # intercept
+        beta_price = model_reduced.params["price"]
+        beta_area  = model_reduced.params["area (sq ft)"]
+    else:
+        # Reduced model rent ~ price + area (sq ft), coefficients fitted on zillowrent.xlsx
+        coef = pd.read_csv(zillow_coef_path).set_index("zillow_sheet").loc[sheet_name]
+        alpha, beta_price, beta_area = float(coef["const"]), float(coef["price"]), float(coef["area_sqft"])
+        print(f"Zillow rent model coefficients for {sheet_name} read from {zillow_coef_path.name}")
 
     # Plot histogram of flood depth from direct damages input data (guard against missing/NaN data)
     if flood_depth_column in direct_damages_input_data.columns:

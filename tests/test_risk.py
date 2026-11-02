@@ -19,7 +19,7 @@ def test_marin_aed():
 def test_aed_bitwise_equal_to_v1():
     import importlib.util
     from coastal_risk_cba.config import REPO_ROOT
-    path = REPO_ROOT / "legacy" / "v1" / "aux_scripts" / "damage_calculation_tools.py"
+    path = REPO_ROOT / "pipeline" / "aux_scripts" / "damage_calculation_tools.py"
     spec = importlib.util.spec_from_file_location("v1_tools", path)
     v1 = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(v1)

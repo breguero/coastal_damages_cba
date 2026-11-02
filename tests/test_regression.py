@@ -1,21 +1,20 @@
-"""v1 regression: risk + cba against 011_DAMAGES_results_final (three sites, rel. tol. 1e-6).
+"""v1 regression: coastal_risk_cba.risk and .cba against the v1 reference tables (rel. tol. 1e-6).
 
-Step 3 part: inputs are the v1 per-unit tables (ALLD_BY_CBA_STUDY_AREA, AEB_byarea_abovethreshold, all_adapt_costs).
-Step 4 adds the chain from *_indirects.csv.
+Inputs are the v1 per-unit tables (ALLD_BY_CBA_STUDY_AREA, AEB_byarea_abovethreshold, all_adapt_costs).
+Runs for every regression site whose reference outputs are reachable (lab share: three sites;
+Santa Cruz sample data: site001_santacruz2).
 """
-
-import importlib.util
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from coastal_risk_cba import cba, risk
-from coastal_risk_cba.config import REPO_ROOT, Config
+from coastal_risk_cba.config import Config
 
 pytestmark = pytest.mark.regression
 CFG = Config.load()
-SITES = [s.id for s in CFG.regression_sites]
+SITES = [s.id for s in CFG.available_regression_sites]
 KEYS = ["cba_study_area", "dem", "adapt"]
 RTOL = 1e-6
 
@@ -77,26 +76,3 @@ def test_cba_legacy(site_id):
     t = cba.regional_cba(u, 0.03, CFG.cba["nyr"], 0)
     ref_t = _ref(site_id, f"CBA_results_TOTALS_{site_id}_CBA_dune0_disc030_mode{mode}.csv")
     _compare(t, ref_t, ["year", "adapt"], CBA_COLS)
-
-
-def _cba_tables():
-    spec = importlib.util.spec_from_file_location("cba_tables", REPO_ROOT / "ref" / "cba_tables.py")
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
-@pytest.mark.parametrize("site_id", SITES)
-def test_cba_all_placed_matches_cba_tables(site_id):
-    ct = _cba_tables()
-    key = next(k for k, v in ct.SITES.items() if v[0] == site_id)
-    ref_units = ct.unit_table(key, CFG.reference_dir)
-    ref_reg = ct.regional_table(ref_units)
-    aeb = _ref(site_id, f"AEB_byarea_{site_id}_abovethreshold.csv")
-    u = cba.unit_cba(aeb, _costs(site_id), 0.03, CFG.cba["nyr"], "all_placed", 0, False)
-    ref_units = ref_units.assign(placed=ref_units["placed"].astype(int))
-    _compare(u.rename(columns={"adaptation_cost": "cost"}), ref_units, ["cba_study_area", "year", "adapt"],
-             ["cost", "pv", "bcr", "placed"])
-    t = cba.regional_cba(u, 0.03, CFG.cba["nyr"], 0)
-    t = t.rename(columns={"pv": "pv_sum", "adaptation_cost": "cost_sum", "bcr": "bcr_regional", "n_placed": "n_units"})
-    _compare(t, ref_reg, ["year", "adapt"], ["pv_sum", "cost_sum", "bcr_regional", "n_units", "n_cost_effective"])

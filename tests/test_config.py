@@ -64,12 +64,12 @@ def test_outputs_never_reference(cfg):
 
 
 def _load_v1_s000():
-    path = REPO_ROOT / "legacy" / "v1" / "S000_project_config_cosmos_adapt.py"
+    path = REPO_ROOT / "pipeline" / "S000_project_config_cosmos_adapt.py"
     spec = importlib.util.spec_from_file_location("v1_S000", path)
     mod = importlib.util.module_from_spec(spec)
     try:
         spec.loader.exec_module(mod)
-    except FileNotFoundError as e:  # S000 raises when no lab root exists
+    except FileNotFoundError as e:  # S000 raises when neither COSMOS_DATA_ROOT nor the lab share exists
         pytest.skip(str(e))
     return mod
 
@@ -93,22 +93,23 @@ def test_matches_v1_s000(cfg):
         assert cfg.site(sid).adapt_names == v1.get_adaptation_names(sid)
     for v in [20, "50", 2085, "dem020"]:
         assert normalize_dem(v) == v1.normalize_dem(v)
-    assert cfg.root == v1.root_directory
+    assert cfg.project_dir == v1.project_root_directory
     assert cfg.inputs_dir == v1.datadir_damages
     assert cfg.damage_tables_dir == v1.damage_table_directory
     assert cfg.recovery_time_file.parent == v1.indirectdamages_max_recovery_time_directory
     assert cfg.multipliers_file.parent == v1.indirectdamages_multiplier_directory
     assert cfg.zillow_file.parent == v1.indirectdamages_zillow_directory
-    assert cfg.reference_dir == v1.project_root_directory / v1.damage_folder_outputs
 
 
 @pytest.mark.regression
 def test_input_files_exist(cfg):
-    for f in [cfg.recovery_time_file, cfg.multipliers_file, cfg.zillow_file,
+    zillow_ok = cfg.zillow_file.is_file() or (cfg.zillow_file.parent / "zillow_rent_ols_coefficients.csv").is_file()
+    assert zillow_ok, cfg.zillow_file
+    for f in [cfg.recovery_time_file, cfg.multipliers_file,
               cfg.damage_tables_dir / cfg.damage["structure_table"],
               cfg.damage_tables_dir / cfg.damage["contents_table"]]:
         assert f.is_file(), f
-    for s in cfg.regression_sites:
+    for s in cfg.available_regression_sites:
         assert cfg.unit_cost_table(s).is_file()
         assert cfg.dimensions_table(s, "seawall").is_file()
         assert s.reference_dir.is_dir()

@@ -57,7 +57,7 @@ from aux_scripts.plot_utils import (
     # SITE = 'site003_venturanorth'
 #SITE = 'site001_santacruz2'
 #SITE = 'site001_santacruz' #for testing only, comment out when running from terminal
-SITE = 'site002_halfmoonbay'
+SITE = RUN_SITE  # set with COSMOS_SITE or run_pipeline.py --site
 #SITE = 'site003_venturanorth'
 #SITE = 'site004_venturanorth2'
 # Mode (runs)  	
@@ -65,7 +65,7 @@ SITE = 'site002_halfmoonbay'
 #   002: morphodynamic update enabled / DEM = 1, morpho = 1 
 #   003: hydro without DEM change (bathy use dem020) / DEM = 0, morpho = 0 
 #   004: morpho without DEM change (bathy use dem020) / DEM = 0, morpho = 1 	
-MODE = '001' # check 000_scenario_convention_dictionary.doc 
+MODE = RUN_MODE  # set with COSMOS_MODE or run_pipeline.py --mode (see 000_scenario_convention_dictionary)
 # ----------------------------------------------------
 
 # ------------------------- DUNE config  ----------------------------------------------------
@@ -76,7 +76,7 @@ if ACTIVATE_DUNE_RECONSTRUCTION:
 else:
     dunemode = 'dune0'  
 # -------------------------- DISCOUNTING --------------
-DISCOUNTING = DISCOUNT_RATES[0]  # Choose discount rate for CBA analysis
+DISCOUNTING = RUN_DISCOUNT_RATE  # set with COSMOS_DISCOUNT_RATE (default 0.03)
 print(f"Using discount rate: {DISCOUNTING*100:.2f}%" )
 # --------------------------- CHECK REGION --------------
 if SITE not in ['site001_santacruz2','site001_santacruz', 'site002_halfmoonbay', 'site003_venturanorth', 'site004_venturanorth2']:
@@ -84,16 +84,16 @@ if SITE not in ['site001_santacruz2','site001_santacruz', 'site002_halfmoonbay',
 # ----------------------------------------------------
 
 # DIRECTORIES AND FILES
-dirout = project_root_directory / damage_folder_outputs / SITE / '012_damages' / 'aed_cba_results' / f'flood_map_{MODE}' 
+dirout = output_root / SITE / '012_damages' / 'aed_cba_results' / f'flood_map_{MODE}' 
 if not dirout.exists():
     dirout.mkdir(parents=True, exist_ok=True) 
 print(f"Output directory: {dirout}")
 
-dirdata_flood_damages= project_root_directory / damage_folder_outputs / SITE / '012_damages' / 'indirect_damages' / f'flood_map_{MODE}'
+dirdata_flood_damages= output_root / SITE / '012_damages' / 'indirect_damages' / f'flood_map_{MODE}'
 print(f"Flood maps directory: {dirdata_flood_damages}")
 
 # load areas 
-clipped_buildings_directory = project_root_directory / damage_folder_outputs / SITE / '011_Joined_NSI_to_Buildings' 
+clipped_buildings_directory = output_root / SITE / '011_Joined_NSI_to_Buildings' 
 #buildings_file = datadir_damages / SITE / 'exposure' / 'buildings_with_cba_study_areas.gpkg'
 buildings_file = clipped_buildings_directory / 'buildings_with_cba_study_areas.gpkg' 
 ALL_DAMAGESs = gpd.read_file(buildings_file)['cba_study_area'].unique()
@@ -504,9 +504,9 @@ fig.update_layout(
 )
 format_plotly_axes(fig)
 fig.write_html(dirout / f"total_damage_by_year_{SITE}_plotly.html")
-fig.write_image(dirout / f"total_damage_by_year_{SITE}_plotly.png")
-fig.write_image(dirout / f"total_damage_by_year_{SITE}_plotly.pdf")
-fig.show()
+write_image_safe(fig, dirout / f"total_damage_by_year_{SITE}_plotly.png")
+write_image_safe(fig, dirout / f"total_damage_by_year_{SITE}_plotly.pdf")
+if not BATCH_RUN: fig.show()
 
 # ###############################################################################################################
 #### Figures per cba_study_area ##########
@@ -623,8 +623,8 @@ for study_area in sorted(ALLD_BY_CBA_STUDY_AREA['cba_study_area'].dropna().uniqu
     )
     format_plotly_axes(fig)
     fig.write_html(per_area_dir / f"total_damage_by_year_{safe_study_area}_{SITE}_plotly.html")
-    fig.write_image(per_area_dir / f"total_damage_by_year_{safe_study_area}_{SITE}_plotly.png")
-    fig.write_image(per_area_dir / f"total_damage_by_year_{safe_study_area}_{SITE}_plotly.pdf")
+    write_image_safe(fig, per_area_dir / f"total_damage_by_year_{safe_study_area}_{SITE}_plotly.png")
+    write_image_safe(fig, per_area_dir / f"total_damage_by_year_{safe_study_area}_{SITE}_plotly.pdf")
 
 
 # ###############################################################################################################
@@ -636,7 +636,7 @@ for study_area in sorted(ALLD_BY_CBA_STUDY_AREA['cba_study_area'].dropna().uniqu
 
 # Plots for each year
 num_adaptations = len(ALLD_BY_CBA_STUDY_AREA['adapt'].unique())
-colors = [cm.get_cmap('tab10')(i / max(num_adaptations - 1, 1)) for i in range(num_adaptations)]
+colors = [plt.get_cmap('tab10')(i / max(num_adaptations - 1, 1)) for i in range(num_adaptations)]
 
 for year in sorted(ALL_DAMAGES['year'].unique()):
     year_label = f"{int(year)}"
@@ -697,9 +697,9 @@ for year in sorted(ALL_DAMAGES['year'].unique()):
     )
     format_plotly_axes(fig)
     fig.write_html(dirout / f"total_damage_by_adaptation_{year_label}_{SITE}_plotly.html")
-    fig.write_image(dirout / f"total_damage_by_adaptation_{year_label}_{SITE}_plotly.png")
-    fig.write_image(dirout / f"total_damage_by_adaptation_{year_label}_{SITE}_plotly.pdf")
-    fig.show()
+    write_image_safe(fig, dirout / f"total_damage_by_adaptation_{year_label}_{SITE}_plotly.png")
+    write_image_safe(fig, dirout / f"total_damage_by_adaptation_{year_label}_{SITE}_plotly.pdf")
+    if not BATCH_RUN: fig.show()
 
 ############################################################################################################ 
 # SUBSET BY BENEFIT THRESHOLD FOR CBA CALCULATION 

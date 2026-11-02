@@ -38,7 +38,7 @@ DIRDATA = datadir_damages #from S000_project_config_cosmos_adapt.py
     # SITE = 'site003_venturanorth'
 
 # REGION NAME 
-SITE = 'site001_santacruz2'
+SITE = RUN_SITE  # set with COSMOS_SITE or run_pipeline.py --site
 #SITE = 'site001_santacruz'
 #SITE = 'site002_halfmoonbay' 
 #SITE = 'site003_venturanorth'
@@ -49,7 +49,7 @@ site_number = SITE.split('_')[0] # extract site number from region name, e.g. si
 flood_map_path          = datadir_damages / SITE / 'flood_map_sims' 
 
 # Create the output folder 
-output_folder = project_root_directory / damage_folder_outputs / SITE / '011_Joined_NSI_to_Buildings'
+output_folder = output_root / SITE / '011_Joined_NSI_to_Buildings'
 os.makedirs(output_folder, exist_ok=True)  #Creates the output folder if it does not already exist.     
 
 #################################################################################################################################################################

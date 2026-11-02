@@ -51,7 +51,7 @@ from itertools import product
     # SITE = 'site001_santacruz' #site_001, site_002? site is the parent dir so you don't need {site}_NSI folder***
     # SITE = 'site002_halfmoonbay' 
     # SITE = 'site003_venturanorth'
-SITE = 'site001_santacruz2'
+SITE = RUN_SITE  # set with COSMOS_SITE or run_pipeline.py --site
 #SITE = 'site001_santacruz' #for testing only, comment out when running from terminal
 #SITE = 'site002_halfmoonbay' #for testing only, comment out when running from terminal
 #SITE = 'site003_venturanorth' #for testing only, comment out when running from terminal
@@ -62,7 +62,7 @@ SITE = 'site001_santacruz2'
 #   002: morphodynamic update enabled / DEM = 1, morpho = 1 
 #   003: hydro without DEM change (bathy use dem020) / DEM = 0, morpho = 0 
 #   004: morpho without DEM change (bathy use dem020) / DEM = 0, morpho = 1 	
-MODE = '002' # check 000_scenario_convention_dictionary.doc 
+MODE = RUN_MODE  # set with COSMOS_MODE or run_pipeline.py --mode (see 000_scenario_convention_dictionary)
 # ----------------------------------------------------
 
 OVERWRITE = True # whether to overwrite existing output files, set to False to skip processing if output already exists
@@ -82,8 +82,8 @@ site_number = SITE.split('_')[0] # extract site number from region name, e.g. si
 #  DIRECTORIES: 
 
 # output damages directory name
-output_folder = project_root_directory /damage_folder_outputs / SITE / '012_damages' / 'damages_by_buildings' / f'flood_map_{MODE}'
-#output_folder = project_root_directory / damage_folder_outputs / SITE / '012_damages_normalfiles' / 'damages_by_buildings' / f'flood_map_{MODE}' #Change to "_cleaned" when running cleaned files
+output_folder = output_root / SITE / '012_damages' / 'damages_by_buildings' / f'flood_map_{MODE}'
+#output_folder = output_root / SITE / '012_damages_normalfiles' / 'damages_by_buildings' / f'flood_map_{MODE}' #Change to "_cleaned" when running cleaned files
 if not output_folder.exists():
     output_folder.mkdir(parents=True, exist_ok=True)
 print(f"Output directory: {output_folder}")
@@ -102,7 +102,7 @@ print(f"Flood damage curves directory: {directory_flood_damage_curves}")
 exposure_directory = datadir_damages / SITE / 'exposure'
 file_roads = exposure_directory / 'roads_clipped.gpkg'
 
-clipped_buildings_directory = project_root_directory / damage_folder_outputs / SITE / '011_Joined_NSI_to_Buildings' 
+clipped_buildings_directory = output_root / SITE / '011_Joined_NSI_to_Buildings' 
 nsi_buildings_file = clipped_buildings_directory / 'buildings_with_cba_study_areas.gpkg'
 print(f"NSI buildings file: {nsi_buildings_file}")
 

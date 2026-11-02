@@ -29,7 +29,7 @@ from aux_scripts.damage_calculation_tools import annual_expected_damage_dunes
 # ---------------------------------------------------------------------------
 # Config — edit these before running
 # ---------------------------------------------------------------------------
-SITE = 'site001_santacruz2'
+SITE = RUN_SITE  # set with COSMOS_SITE or run_pipeline.py --site
 #SITE = 'site004_venturanorth2'
 #SITE = 'site002_halfmoonbay' 
 print(f"SITE={SITE}")
@@ -37,11 +37,11 @@ print(f"SITE={SITE}")
 # ---------------------------------------------------------------------------
 # Directories
 # ---------------------------------------------------------------------------
-dirout = project_root_directory / damage_folder_outputs / SITE / '012_damages' / 'adaptation_costs'
+dirout = output_root / SITE / '012_damages' / 'adaptation_costs'
 dirout.mkdir(parents=True, exist_ok=True)
 
 dirdata_adapt   = datadir_damages / SITE / 'adaptation_dimensions'
-dirdata_dune_vl = project_root_directory / damage_folder_outputs / SITE / '012_damages'
+dirdata_dune_vl = output_root / SITE / '012_damages'
 
 print(f"Output:               {dirout}")
 print(f"Adaptation data:      {dirdata_adapt}")

@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 ## Input directory for datasets:
 
 ##These are the four sites we want to run in general for Cosmos Adapts:
-SITE = 'site001_santacruz2'
+SITE = RUN_SITE  # set with COSMOS_SITE or run_pipeline.py --site
 #SITE = 'site001_santacruz'  # comment if running from terminal 
 #SITE = 'site002_halfmoonbay'  # comment if running from terminal
 #SITE = 'site003_venturanorth'  # comment if running from terminal
@@ -35,7 +35,7 @@ if SITE not in ['site001_santacruz2','site001_santacruz', 'site002_halfmoonbay',
 
 #################################################################################################################################################################
 #buildings_file_path = project_root_directory / datadir_damages / SITE / 'exposure' / 'nsi_to_buildings_proj_all_occtype.gpkg'
-joined_buildings_dir = project_root_directory / damage_folder_outputs / SITE / '011_Joined_NSI_to_Buildings' 
+joined_buildings_dir = output_root / SITE / '011_Joined_NSI_to_Buildings' 
 buildings_file_path = joined_buildings_dir / 'nsi_to_buildings_proj_all_occtype.gpkg' # output of S010 
 buildings = gpd.read_file(buildings_file_path)
 

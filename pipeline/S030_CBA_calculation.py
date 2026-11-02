@@ -48,7 +48,7 @@ plt.rcParams.update({
     # SITE = 'site003_venturanorth'
 #SITE = 'site001_santacruz2'
 #SITE = 'site001_santacruz' #for testing only, comment out when running from terminal
-SITE = 'site002_halfmoonbay'
+SITE = RUN_SITE  # set with COSMOS_SITE or run_pipeline.py --site
 #SITE = 'site003_venturanorth'
 #SITE = 'site004_venturanorth2'
 
@@ -57,7 +57,7 @@ SITE = 'site002_halfmoonbay'
 #   002: morphodynamic update enabled / DEM = 1, morpho = 1 
 #   003: hydro without DEM change (bathy use dem020) / DEM = 0, morpho = 0 
 #   004: morpho without DEM change (bathy use dem020) / DEM = 0, morpho = 1 	
-MODE = '001' # check 000_scenario_convention_dictionary.doc 
+MODE = RUN_MODE  # set with COSMOS_MODE or run_pipeline.py --mode (see 000_scenario_convention_dictionary)
 # ----------------------------------------------------
 
 # ------------------------- DUNE config  ----------------------------------------------------
@@ -72,14 +72,14 @@ NAME = f"CBA_{dunemode}"
 # ------------------------- COST BASE RULE ------------------------------------------------------
 #   'all_placed': every placed measure carries its cost in every epoch (consistent cost base)
 #   'legacy'    : zero-benefit areas get NaN cost and drop out of the regional sum (results in the 2026 report)
-COST_BASE = 'all_placed'
+COST_BASE = RUN_COST_BASE  # set with COSMOS_COST_BASE: 'all_placed' | 'legacy'
 print(f"COST_BASE = {COST_BASE}")
 # ------------------------- DIRECTORIES AND FILES ----------------------------------------------------
 
-dirdata = project_root_directory / damage_folder_outputs / SITE / '012_damages' / 'aed_cba_results' / f'flood_map_{MODE}' 
+dirdata = output_root / SITE / '012_damages' / 'aed_cba_results' / f'flood_map_{MODE}' 
 
 # costs of adaptation (S013) 
-dirdata_costs = project_root_directory / damage_folder_outputs / SITE / '012_damages' / 'adaptation_costs'
+dirdata_costs = output_root / SITE / '012_damages' / 'adaptation_costs'
 cost_filepath = dirdata_costs /  f'all_adapt_costs_{SITE}.csv'
 
 # Check if cost_filepath exists
@@ -92,7 +92,7 @@ print(f"Output directory: {dirout}")
 
 # ------------------------- CBA CALCULATION --------------------------------------------------------------
 
-DISCOUNTING = DISCOUNT_RATES[0]  # Choose discount rate for CBA analysis
+DISCOUNTING = RUN_DISCOUNT_RATE  # set with COSMOS_DISCOUNT_RATE (default 0.03)
 print(f"Using discount rate: {DISCOUNTING*100:.2f}%" )
 
 # Read AEB benefits table:

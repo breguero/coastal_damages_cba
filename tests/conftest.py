@@ -1,20 +1,15 @@
-from pathlib import Path
+"""Regression tests need reference outputs: the lab share, or the Santa Cruz sample data with
+COSMOS_DATA_ROOT=<sample> and COSMOS_REFERENCE_DIR=<sample>/reference_results. Otherwise they are skipped."""
 
 import pytest
 
-LAB_ROOT = Path("/Volumes/cccr-lab")
-REFERENCE_DIR = LAB_ROOT / "001_projects" / "003_cosmos-adapt" / "011_DAMAGES_results_final"
+from coastal_risk_cba.config import Config
 
 
 def pytest_collection_modifyitems(config, items):
-    if REFERENCE_DIR.is_dir():
+    if Config.load().available_regression_sites:
         return
-    skip = pytest.mark.skip(reason=f"reference outputs not mounted: {REFERENCE_DIR}")
+    skip = pytest.mark.skip(reason="no reference outputs (set COSMOS_DATA_ROOT and COSMOS_REFERENCE_DIR)")
     for item in items:
         if "regression" in item.keywords:
             item.add_marker(skip)
-
-
-@pytest.fixture(scope="session")
-def reference_dir():
-    return REFERENCE_DIR

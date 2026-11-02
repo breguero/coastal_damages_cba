@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "coastal_risk_cba: building-level coastal flood damages and cost-benefit analysis of adaptation (CoSMoS Adapts)"
+version: 1.0.0
+date-released: 2026-11-01
+license: BSD-3-Clause
+repository-code: "https://github.com/<org>/coastal_risk_cba"
+authors:
+  - family-names: Reguero
+    given-names: Borja G.
+    email: breguero@ucsc.edu
+    affiliation: "University of California, Santa Cruz"
+  - family-names: Rottmueller
+    given-names: Marina
+    affiliation: "University of California, Santa Cruz"
+  - family-names: Constantz
+    given-names: Brook
+    affiliation: "University of California, Santa Cruz"
+  - family-names: Barcelo
+    given-names: David
+    affiliation: "University of California, Santa Cruz"
+  - family-names: Banerjee
+    given-names: Drishan
+    affiliation: "University of California, Santa Cruz"

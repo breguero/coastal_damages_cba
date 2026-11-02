@@ -6,21 +6,48 @@ Project-wide constants and helpers for the COSMOS-Adapt damage workflow.
 Import with: from S000_project_config_cosmos_adapt import *
 """
 
+import os
 from pathlib import Path
 import numpy as np
 
 # ---------------------------------------------------------------------------
-# Root directory (tries network drive, then fallbacks)
+# Run settings (environment variables; run_pipeline.py sets them from its arguments)
+#   COSMOS_DATA_ROOT     folder that holds 000_Data/ and 010_DAMAGES_INPUT/
+#   COSMOS_OUTPUT_DIR    folder for results (one subfolder per site)
+#   COSMOS_SITE          e.g. site001_santacruz2
+#   COSMOS_MODE          flood-map mode: 001 | 002 | 003 | 004
+#   COSMOS_COST_BASE     CBA cost rule: all_placed | legacy (S030)
+#   COSMOS_DISCOUNT_RATE e.g. 0.03 (S022, S030)
+#   COSMOS_BATCH         1 = do not open interactive figure windows
 # ---------------------------------------------------------------------------
-_candidates = [Path('/cccr-lab'), Path('J:/'), Path('C:/temp/fake_jamaica'), Path('/Volumes/cccr-lab')]
-for _d in _candidates:
-    if _d.exists():
-        root_directory = _d
-        break
-else:
-    raise FileNotFoundError(f'No valid project directory found. Tried: {_candidates}')
+RUN_SITE          = os.environ.get('COSMOS_SITE', 'site001_santacruz2')
+RUN_MODE          = os.environ.get('COSMOS_MODE', '002')
+RUN_COST_BASE     = os.environ.get('COSMOS_COST_BASE', 'all_placed')
+RUN_DISCOUNT_RATE = float(os.environ.get('COSMOS_DISCOUNT_RATE', '0.03'))
+BATCH_RUN         = os.environ.get('COSMOS_BATCH', '0') == '1'
 
-project_root_directory = root_directory / '001_projects' / '003_cosmos-adapt'
+# ---------------------------------------------------------------------------
+# Root directory: COSMOS_DATA_ROOT, else the lab share
+# ---------------------------------------------------------------------------
+damage_folder_outputs  = '011_DAMAGES_results_final'
+
+if os.environ.get('COSMOS_DATA_ROOT'):
+    project_root_directory = Path(os.environ['COSMOS_DATA_ROOT']).expanduser().resolve()
+    if not (project_root_directory / '010_DAMAGES_INPUT').is_dir():
+        raise FileNotFoundError(f'COSMOS_DATA_ROOT has no 010_DAMAGES_INPUT folder: {project_root_directory}')
+else:
+    _candidates = [Path('/cccr-lab'), Path('J:/'), Path('/Volumes/cccr-lab')]
+    for _d in _candidates:
+        if _d.exists():
+            project_root_directory = _d / '001_projects' / '003_cosmos-adapt'
+            break
+    else:
+        raise FileNotFoundError(f'Set COSMOS_DATA_ROOT, or mount the lab share. Tried: {_candidates}')
+
+# Results go to COSMOS_OUTPUT_DIR, else <repository>/outputs.
+# The reference results folder (011_DAMAGES_results_final) is never written by default.
+output_root = Path(os.environ.get('COSMOS_OUTPUT_DIR', Path(__file__).resolve().parents[1] / 'outputs')).expanduser().resolve()
+output_root.mkdir(parents=True, exist_ok=True)
 
 # ---------------------------------------------------------------------------
 # Directory structure
@@ -28,7 +55,6 @@ project_root_directory = root_directory / '001_projects' / '003_cosmos-adapt'
 database_directory     = project_root_directory / '000_Data'
 datadir_damages        = project_root_directory / '010_DAMAGES_INPUT'
 damage_table_directory = database_directory / '001_DAMAGE_TABLES'
-damage_folder_outputs  = '011_DAMAGES_results_final'
 
 indirectdamages_max_recovery_time_directory = database_directory / '020_INDIRECTDAMAGES_MAX_RECOVERY_TIME'
 indirectdamages_multiplier_directory        = database_directory / '021_INDIRECTDAMAGES_MULTIPLIERS'
@@ -168,3 +194,13 @@ def get_adaptation_names(site: str) -> dict:
             f"Unknown site '{site}'. Valid options: {VALID_SITES}"
         )
     return _ADAPT_BY_SITE[site]
+
+
+# ---------------------------------------------------------------------------
+# Plotly static export needs the optional kaleido package; skip it when absent.
+# ---------------------------------------------------------------------------
+def write_image_safe(fig, path):
+    try:
+        fig.write_image(path)
+    except Exception as exc:  # kaleido missing or no Chrome available
+        print(f"WARNING: static plotly export skipped ({path.name}): {type(exc).__name__}")

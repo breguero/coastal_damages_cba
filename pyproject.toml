@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "coastal_risk_cba"
+version = "1.0.0"
+description = "Building-level coastal flood damages, expected annual damage and benefit, and cost-benefit analysis of adaptation measures (CoSMoS Adapts)."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [{ name = "Borja G. Reguero", email = "breguero@ucsc.edu" }]
+dependencies = [
+    "pandas>=2.0",
+    "geopandas>=0.14",
+    "shapely>=2.0",
+    "numpy",
+    "numpy-financial",
+    "rasterio",
+    "rasterstats",
+    "rioxarray",
+    "matplotlib",
+    "seaborn",
+    "plotly",
+    "tqdm",
+    "openpyxl",
+    "pyyaml",
+    "statsmodels",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+export = ["kaleido"]   # static PNG/PDF export of the plotly figures in S022
+
+[tool.setuptools.packages.find]
+include = ["coastal_risk_cba*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["regression: compares against v1 reference outputs (skipped when not available)"]
